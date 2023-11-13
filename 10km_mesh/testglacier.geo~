@@ -1,0 +1,15 @@
+DefineConstant[ frontres = { 50, Path "Gmsh/Parameters"}];
+DefineConstant[ backres = { 10, Path "Gmsh/Parameters"}];
+Point(1) = {0, 0, 0, divide_lower};
+Point(2) = {0, 500, 0, divide_upper};
+Point(3) = {10000, 500, 0, terminus_upper};
+Point(4) = {10000, 0, 0, terminus_lower};
+BSpline(1) = {1, 2, 3, 4, 5};
+Extrude {0, 5, 0} {
+  Line{1}; Layers{10}; Recombine;
+};
+Physical Surface(6) = {1};
+Physical Line(7) = {2};
+Physical Line(8) = {3};
+Physical Line(9) = {4};
+Physical Line(10) = {5};
