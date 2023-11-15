@@ -1,0 +1,7 @@
+#!/bin/bash
+
+gmsh -2 mesh.geo
+ElmerGrid 14 2 mesh.msh -autoclean
+ElmerGrid 14 5 mesh.msh -autoclean
+mv mesh/* ./
+rmdir mesh

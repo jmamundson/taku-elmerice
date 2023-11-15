@@ -44,9 +44,7 @@ $ function tangentialupdate(X) import dt{\
 }
 
 Header
-  ! Mesh DB "../meshes" "10km_mesh"
-  !Mesh DB "." "10km_mesh"
-  Mesh DB "." "testglacier_mesh"
+  Mesh DB "." "mesh"
   Results Directory "./results/flat"
 End
 
@@ -759,7 +757,7 @@ End
 !! BC Lateral Ice-Shelf (air or sea contact)
 Boundary Condition 2
   Name = "front"
-  Target Boundaries = 2
+  Target Boundaries = 4 ! previously 2
   Calving Front Mask = Logical True
 
   Flow Force BC = Logical True
@@ -782,7 +780,7 @@ End
 !! BC  Free surface Top
 Boundary Condition 3
   Name = "top"
-  Target Boundaries = 3
+  Target Boundaries = 2 ! previously 3
   Body Id = 2
   Top Surface Mask = Logical True
 
@@ -802,7 +800,7 @@ End
 !! Symmetry axis
 Boundary Condition 4
   Name = "back"
-  Target Boundaries = 4
+  Target Boundaries = 3 ! previously 4
   Velocity 1 = $U0
   Long Mesh Update = Real 0.0
   Vert Mesh Update = Real 0.0

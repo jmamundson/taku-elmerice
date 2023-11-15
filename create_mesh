@@ -1,4 +1,0 @@
-#!/bin/bash
-
-ElmerGrid 14 2 my_gmsh_mesh.msh -autoclean # creates mesh that Elmer/Ice accesses
-ElmerGrid 14 5 my_gmsh_mesh.msh -autoclean # creates vtu file in order to view the mesh in paraview
