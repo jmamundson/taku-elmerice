@@ -6,7 +6,7 @@ echo on
 ! THIS IS THE PARAMETER SPACE:
 !-----------------------------
 ! the inflow velocity at X=0 in m/a
-$U0 = 4000.0
+$U0 = 0.0
 ! the ablation (in m/a i.e.)
 $ablation = -2.0
 !-----------------------------
@@ -25,17 +25,19 @@ $gravity = -9.81*yearinsec^2
 $sl0 = 0.0
 
 ! the timestep
-$dt = (24.0/24.0)/365.25
+$dt = (10.0*24.0/24.0)/365.25
 $tspan = 1000.0
 $tout = 1000.0 
 
 ! parameters for mass balance profile; using # to define LUA variables.
+! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
 #dBdz = 0.01 ! mass balance gradient {a^-1}
 #Bmax = 5 ! maximum mass balance rate {m a^-1}
 #ELA = 1000 ! equilibrium line altitude {m}
 #k = 0.005 ! smoothing parameter
 #zthreshold = Bmax/dBdz+ELA
-    ! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
+#Bsl = -10 ! mass balance rate at sea level {m a^-1}
+    
 
 ! parameters needed for lateral friction; see Gagliardini et al. (2010)
 $Afactor = 75.0 ! for 0 C  [MPa^{-3}a^{-1}]; see Cuffey and Paterson
@@ -44,8 +46,8 @@ $etai = 1.0/(2*Afactor)^(1.0/n)
 $W = 2.5e3 ! half width [m]
 $Kspring = etai * (n+1)^(1/n) / (rhoi * W^(1+(1/n)))
 
-$bed_func = "./bed/bed_flat"
-$namerun = "spinup_flat" 
+$bed_func = "./bed/bed_gaussian"
+$namerun = "spinup_gaussian" 
 
 $ function tangentialupdate(X) import dt{\
    _tangentialupdate = X(0) + X(1) * dt;\
@@ -53,7 +55,7 @@ $ function tangentialupdate(X) import dt{\
 
 Header
   Mesh DB "." "mesh"
-  Results Directory "./results/flat"
+  Results Directory "./results/gaussian"
 End
 
 Constants
@@ -186,19 +188,10 @@ Body Force 2
    Zs Top Accumulation Flux 1 = Real 0.0e0
    ! Zs Top Accumulation Flux 2 = Real $ablation !m/a
    Zs Top Accumulation Flux 2 = Variable Zs Top
-    Real LUA "(dBdz*(tx[0] - 1/(2*k)*math.log(1 + math.exp(2*k*(tx[0]-zthreshold)))))"
-    !Real LUA "(tx[0]*dBdz-5)" ! accumulation = -5 + 10 *Zs/(max(elevation))
-
-!Real LUA "(dBdz*(tx[0] - 1/(2*k)*log(1 + exp(2*k*(tx[0]-zthreshold)))))"
-    ! dBdz = 0.01 ! mass balance gradient {a^-1}
-    ! Bmax = 5 ! maximum mass balance rate {m a^-1}
-    ! ELA = 1000 ! equilibrium line altitude {m}
-    ! k = 0.005 ! smoothing parameter
-    ! zthreshold = Bmax/dBdz+ELA
-    ! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
+    Real LUA "(dBdz*(tx[0] - 1/(2*k)*math.log(1 + math.exp(2*k*(tx[0]-zthreshold)))) + Bsl)"
 
    Balance Rate = Variable Zs Top ! added this to be able to output the balance rate
-    Real LUA "(tx[0]*(10/1000)-5)" ! accumulation = -5 + 10 *Zs/(max(elevation))
+    Real LUA "(dBdz*(tx[0] - 1/(2*k)*math.log(1 + math.exp(2*k*(tx[0]-zthreshold)))) + Bsl)"
 
 End
 

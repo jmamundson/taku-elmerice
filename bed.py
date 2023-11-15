@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 
 x = np.linspace(0,50e3,1001) # longitudinal coordinate [m]
 
-aB = 3000 # height of gaussian peak 
-bB = -20000 # location of peak of gaussian [m]
+aB = 4000 # height of gaussian peak 
+bB = -30000 # location of peak of gaussian [m]
 cB = 20000 # width of gaussian
 
 zmin = -500 # max fjord depth
@@ -21,7 +21,7 @@ bedrock = aB*np.exp(-(x-bB)**2/(2*cB**2))
 
 aS = 300 # height of sill
 bS = 40000 # location of sill
-cS = 500 # width of sill
+cS = 3000 # width of sill
 
 sill = aS*np.exp(-(x-bS)**2/(2*cS**2))
  

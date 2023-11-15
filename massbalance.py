@@ -24,7 +24,7 @@ zthreshold = Bmax/dBdz+ELA
 
 heaviside = dBdz * (1- np.exp(2*k*(z-zthreshold))/(1+np.exp(2*k*(z-zthreshold))))
 
-B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
+B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold)))) - 10
 
-plt.plot(z, dBdz*z)
+plt.plot(z, dBdz*z - 10 )
 plt.plot(z, B, '.')

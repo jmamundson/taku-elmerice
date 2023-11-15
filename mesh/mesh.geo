@@ -1,7 +1,7 @@
-DefineConstant[ frontres = {10, Name "frontres"}]; // mesh size near glacier terminus
-DefineConstant[ backres = { 100, Name "backres"}]; // mesh size near ice divide
+DefineConstant[ frontres = {100, Name "frontres"}]; // mesh size near glacier terminus
+DefineConstant[ backres = { 500, Name "backres"}]; // mesh size near ice divide
 Point(1) = {0, 0, 0, backres}; // coordinate of bedrock at ice divide
-Point(2) = {10000, 0, 0, frontres}; // coordinate of bedrock at glacier terminus
+Point(2) = {40000, 0, 0, frontres}; // coordinate of bedrock at glacier terminus
 Line(1) = {1, 2}; // create line from points 1 and 2
 Extrude {0, 1000, 0} {
   Line{1}; Layers{10}; Recombine;
