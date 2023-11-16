@@ -1,7 +1,5 @@
 To-do list:
 
-1. Create mesh. [How to do this?]
-2. Make mass balance depend on elevation.
-3. Change bed topography.
-4. Implement calving.
-5. Implement basal erosion.
+1. Change sliding to coulomb.
+2. Implement calving.
+3. Implement basal erosion.

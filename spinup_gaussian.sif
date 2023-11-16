@@ -33,10 +33,10 @@ $tout = 1000.0
 ! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
 #dBdz = 0.01 ! mass balance gradient {a^-1}
 #Bmax = 5 ! maximum mass balance rate {m a^-1}
-#ELA = 1000 ! equilibrium line altitude {m}
+#ELA = 800 ! equilibrium line altitude {m}
 #k = 0.005 ! smoothing parameter
 #zthreshold = Bmax/dBdz+ELA
-#Bsl = -10 ! mass balance rate at sea level {m a^-1}
+#Bsl = -8 ! mass balance rate at sea level {m a^-1}
     
 
 ! parameters needed for lateral friction; see Gagliardini et al. (2010)
@@ -45,6 +45,11 @@ $n = 3.0
 $etai = 1.0/(2*Afactor)^(1.0/n)
 $W = 2.5e3 ! half width [m]
 $Kspring = etai * (n+1)^(1/n) / (rhoi * W^(1+(1/n)))
+
+! parameters needed for Coulomb friction
+$beta = 0.02
+$As = beta^(-n)
+
 
 $bed_func = "./bed/bed_gaussian"
 $namerun = "spinup_gaussian" 
@@ -730,19 +735,36 @@ Boundary Condition 1
   Vert Mesh Update 2 = Variable Zs Bottom
     Real Procedure "ElmerIceUSF" "ZsBottomMzsIniCalving"
 
+ !! Water pressure given through the Stokes 'External Pressure' parameter 
+ !! What should be given here is -pw (negative)
+ ! if we want the pressure to not be equal to sea pressure, we need to write a function that uses the grounded mask
+ ! External Pressure = Variable Coordinate 2
+ !   Real MATC "min(0,rhow*gravity*tx)"
+
+
 ! Bedrock conditions
 
   Slip Coefficient 2 = Variable Coordinate 1
-    Real Procedure "ElmerIceUSF" "SlidCoef_Contact"
+    Real Procedure "ElmerIceUSF" "Friction_Coulomb"
+  !! Parameters needed for the Coulomb Friction Law
+  Friction Law Sliding Coefficient = Real $As
+  Friction Law Post-Peak Exponent  = Real 1.0      
+  Friction Law Maximum Value = Real 0.5           
+  Friction Law PowerLaw Exponent = Real $n         
+  Friction Law Linear Velocity = Real 1.0e-4
 
-  Sliding Law = String "Budd"
-  Budd Friction Coefficient = Real 2.0e-5
-  Budd Velocity Exponent = Real $1.0/3.0
-  Budd Zab Exponent = Real 1.0
-  Budd Linear Velocity = Real 1.0e-5
-  Budd Floatation = Logical True 
-  Budd Ocean Density = Real $rhow
-  Budd Gravity = Real $gravity
+
+  !Slip Coefficient 2 = Variable Coordinate 1
+  !  Real Procedure "ElmerIceUSF" "SlidCoef_Contact"
+
+  !Sliding Law = String "Budd"
+  !Budd Friction Coefficient = Real 2.0e-5
+  !Budd Velocity Exponent = Real $1.0/3.0
+  !Budd Zab Exponent = Real 1.0
+  !Budd Linear Velocity = Real 1.0e-5
+  !Budd Floatation = Logical True 
+  !Budd Ocean Density = Real $rhow
+  !Budd Gravity = Real $gravity
 
 
   Grounding Line Definition = String "Discontinuous"
