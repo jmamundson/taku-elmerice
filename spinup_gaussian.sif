@@ -257,38 +257,7 @@ End
 !---------------- SOLVERS --------------------------
 !---------------------------------------------------
 
-! Initialize the mesh so that it stretches from the bed to the surface
 Solver 1
-  Equation = "Vert Mesh Initial"
-  Exec Solver = "Before Simulation"
-  Procedure =  File "./prog/MeshSolve1.so" "MeshSolver"
-  Variable = "Vert Mesh Update"
-  Variable DOFs = 2
-
-  Linear System Solver = Iterative
-  Linear System Max Iterations = 500
-  Linear System Iterative Method = BiCGStab
-  Linear System Preconditioning = ILU0
-  Linear System Convergence Tolerance = Real 1.0e-6
-  Steady State Convergence Tolerance = 1.0e-04
-  Linear System Residual Output = 1
-  Optimize Bandwidth = Logical False
-End
-
-!! Initialisation of the Grounded Mask
-Solver 2
-  Exec Solver = "Before Simulation"
-  Equation = GroundedMaskIni
-  Procedure = "ElmerIceSolvers" "GroundedSolver"
-  Variable = GroundedMask
-  Variable DOFs = 1
-
-  Toler = Real 1.0e-5
-  !Bedrock Variable = String "bedrock"
-  Bedrock Material = String "Min Zs Bottom"
-End
-
-Solver 3
   Equation = "Distance"
   Exec Solver = "Before Timestep"
   Procedure = "DistanceSolve" "DistanceSolver1"
@@ -305,14 +274,14 @@ Solver 3
   Steady State Convergence Tolerance = 1.0e-4
 End
 
-Solver 4
+Solver 2
   Exec Solver = "Before Timestep"
   Equation = "bedrock update"
   Procedure = "./"$bed_func" ""getbedrock"
   Variable = -dofs 1 "bedrock"
 End
 
-Solver 5
+Solver 3
    Equation = "Flowdepth"
    Exec Solver = "Before Timestep"
    Procedure = File "ElmerIceSolvers" "FlowDepthSolver"
@@ -338,7 +307,7 @@ Solver 5
   !Freesurf Name = String "FreeSurf"
 End
 
-Solver 6
+Solver 4
    Equation = "Flowheight"
    Exec Solver = "Before Timestep"
    Procedure = File "ElmerIceSolvers" "FlowDepthSolver"
@@ -364,7 +333,7 @@ Solver 6
   !Freesurf Name = String "FreeSurf"
 End
 
-Solver 7
+Solver 5
   Equation = "NormalVector"
   Procedure = "ElmerIceSolvers" "ComputeNormalSolver"
   Exec Solver = "Before Timestep"
@@ -375,7 +344,7 @@ Solver 7
   Optimize Bandwidth = Logical False
 End
 
-Solver 8
+Solver 6
   Equation = Fw
   Exec Solver = "Before Timestep"
   Procedure = "ElmerIceSolvers" "GetHydrostaticLoads"
@@ -383,7 +352,7 @@ Solver 8
   Variable DOFs = 2
 End
 
-Solver 9
+Solver 7
   Equation = "Navier-Stokes"
 
   Linear System Solver = Direct
@@ -412,7 +381,7 @@ Solver 9
 
 End
 
-Solver 10
+Solver 8
   Equation = String "StressSolver"
   Procedure =  File "ElmerIceSolvers" "ComputeDevStress"
   Exec Solver = "After Timestep"
@@ -436,7 +405,7 @@ Solver 10
   Linear System Residual Output = 1
 End
 
-Solver 11
+Solver 9
   Equation = "Long Mesh Update"
   Procedure =  File "MeshSolve" "MeshSolver"
   Variable = "Long Mesh Update"
@@ -453,7 +422,7 @@ Solver 11
   Optimize Bandwidth = Logical False
 End
 
-Solver 12
+Solver 10
   Equation = "Free Surface Top"
   Procedure =  "FreeSurfaceSolver" "FreeSurfaceSolver"
   Variable = "Zs Top"
@@ -486,8 +455,9 @@ Solver 12
   Relaxation Factor = Real 1.0
 End
 
-Solver 13
+Solver 11
   Equation = "Free Surface Sea/Shelf"
+  Exec Solver = "Never"
   Procedure =  "./prog/FreeSurfaceSolver1" "FreeSurfaceSolver"
   Variable = "Zs Bottom"
   Variable DOFS =  1
@@ -519,7 +489,7 @@ Solver 13
 
 End
 
-Solver 14
+Solver 12
   Equation = "Vert Mesh Update"
   Procedure =  File "./prog/MeshSolve1" "MeshSolver"
   Variable = "Vert Mesh Update"
@@ -535,18 +505,7 @@ Solver 14
   Optimize Bandwidth = Logical False
 End
 
-! Compute the Mask
-Solver 15
-  Equation = GroundedMask
-  Procedure = "ElmerIceSolvers" "GroundedSolver"
-  Variable = GroundedMask
-  Variable DOFs = 1
-
-  Toler = Real 1.0e-5
-  Bedrock Material = String "Min Zs Bottom"
-End
-
-Solver 16
+Solver 13
   Equation = Calving
   Procedure = "./prog/forceCalving.so" "Find_Calving"
   Exec Solver = "After Timestep"
@@ -560,7 +519,7 @@ Solver 16
 End
 
 
-Solver 17
+Solver 14
   Equation = "Front Displacement"
   Procedure = "ElmerIceSolvers" "FDMeshSolver"
   Exec Solver = "Never"
@@ -583,9 +542,9 @@ Solver 17
 End
 
 
-Solver 18
+Solver 15
   Equation = MeshToMesh
-
+  Exec Solver = "Never"
   Procedure = "ElmerIceSolvers" "TwoMeshes"
   Variable = Height_TwoMeshes ! Only needed for TwoMeshes, I think. Not sure what it does.
   Exec Solver = "After Timestep"
@@ -631,7 +590,7 @@ Solver 18
   Surface Variable 3 = String "GroundedMask"
 End
 
-Solver 19
+Solver 16
   Equation = "Strain Rate"
   Procedure = "ElmerIceSolvers" "ComputeStrainRate"
   Exec Solver = "After Timestep"
@@ -653,7 +612,7 @@ Solver 19
   Linear System Direct Method = umfpack
 End
 
-Solver 20
+Solver 17
    Equation = "IntegrateVertically"
    Exec Solver = "After Timestep"
    Procedure = File "ElmerIceSolvers" "IntegrateVertically"
@@ -674,7 +633,7 @@ Solver 20
    Linear System Direct Method = umfpack
 End
 
-Solver 21
+Solver 18
   Equation = "ResultOutput"
   Procedure = File "ResultOutputSolve" "ResultOutputSolver"
   Exec Solver = "After Timestep"
@@ -691,17 +650,17 @@ End
 !---------------------------------------------------
 
 Equation 1 ! for glacier bulk
-  Active Solvers (15) = 1 3 5 6 7 9 10 11 14 16 17 18 19 20 21
+  Active Solvers(14) = 1 3 4 5 7 8  9 12 13 14 15 16 17 18
 End
 
 Equation 2 ! for free surface
-  Active Solvers(1) = 12
+  Active Solvers(1) = 10
   Flow Solution Name = String "Flow Solution"
   Convection = String Computed
 End
 
 Equation 3 ! for bedrock surface
-  Active Solvers(5) = 2 4 8 13 15
+  Active Solvers(3) = 2 6 11
   Flow Solution Name = String "Flow Solution"
   Convection = String Computed
 End
@@ -720,7 +679,6 @@ Boundary Condition 1
   Normal-Tangential Velocity = Logical True
   Flow Force BC = Logical True
 
-
 ! Condition where the bed is stuck
 
   ! Bottom Surface = Variable Coordinate 1
@@ -728,18 +686,20 @@ Boundary Condition 1
 
   Zs Bottom = Variable Coordinate 1
     Real Procedure "./"$bed_func" ""initbedrock"
-  Zs Bottom Condition = Variable GroundedMask
-    Real MATC "tx + 0.5"
+  !Zs Bottom Condition = Variable GroundedMask
+  !  Real MATC "tx + 0.5"
 
   Vert Mesh Update 2 = Variable Zs Bottom
     Real Procedure "ElmerIceUSF" "ZsBottomMzsIniCalving"
 
  !! Water pressure given through the Stokes 'External Pressure' parameter 
  !! What should be given here is -pw (negative)
- ! if we want the pressure to not be equal to sea pressure, we need to write a function that uses the grounded mask
- ! External Pressure = Variable Coordinate 2
- !   Real MATC "min(0,rhow*gravity*tx)"
+ ! if we want the pressure to not be equal to sea pressure, we need to write a function
 
+  External Pressure = Variable Coordinate 2
+    Real Procedure "ElmerIceUSF" "SeaPressure"
+
+  Compute Sea Pressure = Logical True
 
 ! Bedrock conditions
 
@@ -766,39 +726,20 @@ Boundary Condition 1
   !Budd Gravity = Real #gravity
 
 
-  Grounding Line Definition = String "Discontinuous"
-  Test Contact Tolerance = real 1.0e-3
+  Velocity 1 = Real 0.0 ! no velocity normal to the surface
 
-  Velocity 1 = Real 0.0
-  Velocity 1 Condition = Variable GroundedMask
-    Real MATC "tx + 0.5"
+  Height = Real 0.0 ! ???
 
-! Shelf conditions
-
-  External Pressure = Variable Coordinate 2
-     Real Procedure "ElmerIceUSF" "SeaPressure"
-
-  Slip Coefficient 1 = Variable Coordinate 2
-     Real Procedure "ElmerIceUSF" "SeaSpring"
-
-  ComputeNormal Condition = Variable GroundedMask
-    Real MATC "tx + 0.5"
-
-  Compute Sea Pressure = Logical True
-  Compute Sea Spring = Logical True
-
-  Height = Real 0.0
-
-  Mean Velocity = Real 0.0
+  Mean Velocity = Real 0.0 ! ???
 
   Front Displacement 2 = Variable Inity, Coordinate 2
     Real MATC "tx(1) - tx(0)"
 End
 
-!! BC Lateral Ice-Shelf (air or sea contact)
+!! BC Glacier terminus
 Boundary Condition 2
   Name = "front"
-  Target Boundaries = 4 ! previously 2
+  Target Boundaries = 4
   Calving Front Mask = Logical True
 
   Flow Force BC = Logical True
@@ -818,10 +759,11 @@ Boundary Condition 2
     Real MATC "tx(1) - tx(0) + tx(2)"
 End
 
+
 !! BC  Free surface Top
 Boundary Condition 3
   Name = "top"
-  Target Boundaries = 2 ! previously 3
+  Target Boundaries = 2
   Body Id = 2
   Top Surface Mask = Logical True
 
@@ -829,8 +771,6 @@ Boundary Condition 3
   ComputeNormal = Logical False
   Vert Mesh Update 2 = Variable Zs Top
     Real Procedure "ElmerIceUSF" "ZsTopMzsIniCalving"
-  ! Top Surface = Variable Coordinate 1
-  !   Real Procedure "./"$bed_func" ""initsurface"
 
   Front Displacement 2 = Variable Inity, Coordinate 2
     Real MATC "tx(1) - tx(0)"
@@ -838,10 +778,10 @@ Boundary Condition 3
   
 End
 
-!! Symmetry axis
+!! BC Ice divide
 Boundary Condition 4
   Name = "back"
-  Target Boundaries = 3 ! previously 4
+  Target Boundaries = 3
   Velocity 1 = #U0
   Long Mesh Update = Real 0.0
   Vert Mesh Update = Real 0.0
