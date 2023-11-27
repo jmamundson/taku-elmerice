@@ -6,28 +6,27 @@ echo on
 ! THIS IS THE PARAMETER SPACE:
 !-----------------------------
 ! the inflow velocity at X=0 in m/a
-$U0 = 0.0
-! the ablation (in m/a i.e.)
-$ablation = -2.0
+#U0 = 0.0
+
 !-----------------------------
 !
 ! derived parameter
 ! working units are MPa, a, m
 !
-$yearinsec = 365.25*24.0*60.0*60.0
-$rhoi = 910.0/(1.0e6*yearinsec^2)
-$rhow = 1030.0/(1.0e6*yearinsec^2)
-$rhof = 1000.0/(1.0e6*yearinsec^2)
+#yearinsec = 365.25*24.0*60.0*60.0
+#rhoi = 910.0/(1.0e6*yearinsec^2)
+#rhow = 1030.0/(1.0e6*yearinsec^2)
+#rhof = 1000.0/(1.0e6*yearinsec^2)
 
-$gravity = -9.81*yearinsec^2
+#gravity = -9.81*yearinsec^2
 
 ! sea level
-$sl0 = 0.0
+#sl0 = 0.0
 
 ! the timestep
-$dt = (10.0*24.0/24.0)/365.25
-$tspan = 1000.0
-$tout = 1000.0 
+#dt = (10.0*24.0/24.0)/365.25
+#tspan = 1000.0
+#tout = 1000.0 
 
 ! parameters for mass balance profile; using # to define LUA variables.
 ! B = dBdz * (z - 1/(2*k)*np.log(1 + np.exp(2*k*(z-zthreshold))))
@@ -40,15 +39,15 @@ $tout = 1000.0
     
 
 ! parameters needed for lateral friction; see Gagliardini et al. (2010)
-$Afactor = 75.0 ! for 0 C  [MPa^{-3}a^{-1}]; see Cuffey and Paterson
-$n = 3.0
-$etai = 1.0/(2*Afactor)^(1.0/n)
-$W = 2.5e3 ! half width [m]
-$Kspring = etai * (n+1)^(1/n) / (rhoi * W^(1+(1/n)))
+#Afactor = 75.0 ! for 0 C  [MPa^{-3}a^{-1}]; see Cuffey and Paterson
+#n = 3.0
+#etai = 1.0/(2*Afactor)^(1.0/n)
+#W = 2.5e3 ! half width [m]
+#Kspring = etai * (n+1)^(1/n) / (rhoi * W^(1+(1/n)))
 
 ! parameters needed for Coulomb friction
-$beta = 0.02
-$As = beta^(-n)
+#beta = 0.02
+#As = beta^(-n)
 
 
 $bed_func = "./bed/bed_gaussian"
@@ -59,15 +58,15 @@ $ function tangentialupdate(X) import dt{\
 }
 
 Header
-  Mesh DB "." "mesh"
+  Mesh DB "." "mesh/mesh"
   Results Directory "./results/gaussian"
 End
 
 Constants
-  Water Density = Real $rhow
-  Rho = Real $rhoi
-  g = Real $gravity
-  Sea Level = Real $sl0
+  Water Density = Real #rhow
+  Rho = Real #rhoi
+  g = Real #gravity
+  Sea Level = Real #sl0
 
 End
 
@@ -81,9 +80,9 @@ Simulation
 
   Timestepping Method = "bdf"
   BDF Order = 1
-  Timestep Intervals = $tspan
-  Output Intervals = $tout
-  Timestep Sizes = $dt
+  Timestep Intervals = #tspan
+  Output Intervals = #tout
+  Timestep Sizes = #dt
 
   Initialize Dirichlet Conditions = Logical False
   Steady State Max Iterations = 1
@@ -181,9 +180,9 @@ Body Force 1
 
   ! Also required for lateral drag
   Lateral Friction Gravity 1 = Real 0.0    
-  Lateral Friction Gravity 2 = Real $gravity
-  Lateral Friction Coefficient = Real $Kspring
-  Lateral Friction Exponent = Real $1.0/n
+  Lateral Friction Gravity 2 = Real #gravity
+  Lateral Friction Coefficient = Real #Kspring
+  Lateral Friction Exponent = Real #1.0/n
   Flow Solver Name = String Flow Solution
   
 End
@@ -211,7 +210,7 @@ End
 
 !! ice material properties in MPa - m - a system
 Material 1
-  Density = Real $rhoi
+  Density = Real #rhoi
 
   Viscosity Model = String "Glen"
   ! Viscosity has to be set to a dummy value
@@ -240,7 +239,7 @@ Material 1
   Glen Enhancement Factor = Real 1.0
   Constant Temperature = Real 0.0
 
-  Sea Level = Real $sl0
+  Sea Level = Real #sl0
 
   Min Zs Top = Variable "Zs Bottom"
     Real MATC "tx + 10.0"
@@ -747,10 +746,10 @@ Boundary Condition 1
   Slip Coefficient 2 = Variable Coordinate 1
     Real Procedure "ElmerIceUSF" "Friction_Coulomb"
   !! Parameters needed for the Coulomb Friction Law
-  Friction Law Sliding Coefficient = Real $As
+  Friction Law Sliding Coefficient = Real #As
   Friction Law Post-Peak Exponent  = Real 1.0      
   Friction Law Maximum Value = Real 0.5           
-  Friction Law PowerLaw Exponent = Real $n         
+  Friction Law PowerLaw Exponent = Real #n         
   Friction Law Linear Velocity = Real 1.0e-4
 
 
@@ -759,12 +758,12 @@ Boundary Condition 1
 
   !Sliding Law = String "Budd"
   !Budd Friction Coefficient = Real 2.0e-5
-  !Budd Velocity Exponent = Real $1.0/3.0
+  !Budd Velocity Exponent = Real #1.0/3.0
   !Budd Zab Exponent = Real 1.0
   !Budd Linear Velocity = Real 1.0e-5
   !Budd Floatation = Logical True 
-  !Budd Ocean Density = Real $rhow
-  !Budd Gravity = Real $gravity
+  !Budd Ocean Density = Real #rhow
+  !Budd Gravity = Real #gravity
 
 
   Grounding Line Definition = String "Discontinuous"
@@ -843,7 +842,7 @@ End
 Boundary Condition 4
   Name = "back"
   Target Boundaries = 3 ! previously 4
-  Velocity 1 = $U0
+  Velocity 1 = #U0
   Long Mesh Update = Real 0.0
   Vert Mesh Update = Real 0.0
   Front Displacement 1 = Real 0.0
