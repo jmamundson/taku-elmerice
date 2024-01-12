@@ -1,3 +1,4 @@
+! seems to crash if bed gets too deep -- water pressure too high
 check keywords warn
 echo on
 !
@@ -24,7 +25,7 @@ echo on
 #sl0 = 0.0
 
 ! the timestep
-#dt = (10.0*24.0/24.0)/365.25
+#dt = 10.0/365.25
 #tspan = 1000.0
 #tout = 1000.0 
 
@@ -135,8 +136,8 @@ Initial Condition 1
   Mesh Velocity 1 = Real 0.0
   Mesh Velocity 2 = Real 0.0
   Mesh Velocity 3 = Real 0.0
-  Mesh Update 1 = Real 0.0
-  Mesh Update 2 = Real 0.0
+  Vert Mesh Update 1 = Real 0.0
+  Vert Mesh Update 2 = Real 0.0
 
   Calving 1 = Real 0.0
   Calving 2 = Real 0.0
@@ -144,7 +145,7 @@ End
 
 !! for top free surface
 Initial Condition 2
-  Zs Top = Equals Coordinate 2 ! Variable Coordinate 1
+  Zs Top = Equals Coordinate 2 !Variable Coordinate 1
     !Real Procedure "./"$bed_func" ""initsurface"
   Reference Zs Top = Equals Coordinate 2 !Variable Coordinate 1
     !Real Procedure "./"$bed_func" ""initsurface"
@@ -165,11 +166,8 @@ End
 !---------------------------------------------------
 
 Body Force 1
-  Vert Mesh Update 1 = Real 0.0
-  Long Mesh Update 2 = Real 0.0
-  !Flow BodyForce 1 = Real 0.0
-  !Flow BodyForce 2 = Real $gravity
-
+  !Vert Mesh Update 1 = Real 0.0
+  
   ! Body forces are specified this way to allow for
   ! lateral drag; use above equations if removing
   ! lateral drag
@@ -190,7 +188,6 @@ End
 !! accumulation flux in m/year
 Body Force 2
    Zs Top Accumulation Flux 1 = Real 0.0e0
-   ! Zs Top Accumulation Flux 2 = Real $ablation !m/a
    Zs Top Accumulation Flux 2 = Variable Zs Top
     Real LUA "(dBdz*(tx[0] - 1/(2*k)*math.log(1 + math.exp(2*k*(tx[0]-zthreshold)))) + Bsl)"
 
@@ -344,6 +341,7 @@ Solver 5
   Optimize Bandwidth = Logical False
 End
 
+
 Solver 6
   Equation = Fw
   Exec Solver = "Before Timestep"
@@ -351,6 +349,7 @@ Solver 6
   Variable = Fw[Fwater:2]
   Variable DOFs = 2
 End
+
 
 Solver 7
   Equation = "Navier-Stokes"
@@ -378,8 +377,8 @@ Solver 7
   Nonlinear Update Exported Variables = Logical True
 
   Flow Model = String "Stokes"
-
 End
+
 
 Solver 8
   Equation = String "StressSolver"
@@ -405,24 +404,8 @@ Solver 8
   Linear System Residual Output = 1
 End
 
+
 Solver 9
-  Equation = "Long Mesh Update"
-  Procedure =  File "MeshSolve" "MeshSolver"
-  Variable = "Long Mesh Update"
-  Variable DOFs = 2
-  Exec Solver = "Never"
-
-  Linear System Solver = Iterative
-  Linear System Max Iterations = 500
-  Linear System Iterative Method = BiCGStab
-  Linear System Preconditioning = ILU0
-  Linear System Convergence Tolerance = Real 1.0e-6
-  Steady State Convergence Tolerance = 1.0e-04
-  Linear System Residual Output = 1
-  Optimize Bandwidth = Logical False
-End
-
-Solver 10
   Equation = "Free Surface Top"
   Procedure =  "FreeSurfaceSolver" "FreeSurfaceSolver"
   Variable = "Zs Top"
@@ -455,7 +438,7 @@ Solver 10
   Relaxation Factor = Real 1.0
 End
 
-Solver 11
+Solver 10
   Equation = "Free Surface Sea/Shelf"
   Exec Solver = "Never"
   Procedure =  "./prog/FreeSurfaceSolver1" "FreeSurfaceSolver"
@@ -489,8 +472,9 @@ Solver 11
 
 End
 
-Solver 12
+Solver 11
   Equation = "Vert Mesh Update"
+  Exec Solver = "After Timestep"
   Procedure =  File "./prog/MeshSolve1" "MeshSolver"
   Variable = "Vert Mesh Update"
   Variable DOFs = 2
@@ -505,135 +489,8 @@ Solver 12
   Optimize Bandwidth = Logical False
 End
 
-Solver 13
-  Equation = Calving
-  Procedure = "./prog/forceCalving.so" "Find_Calving"
-  Exec Solver = "After Timestep"
 
-  Calving Size = Real 0.0
-  !  Real MATC "if (tx(0) < 1.1*dt) 200.0; else 00.0"
-
-  Variable = Calving
-  Variable DOFs = 2
-
-End
-
-
-Solver 14
-  Equation = "Front Displacement"
-  Procedure = "ElmerIceSolvers" "FDMeshSolver"
-  Exec Solver = "Never"
-  Variable = Front Displacement
-  Variable DOFs = 2
-
-  Exported Variable 1 = InitX
-  Exported Variable 2 = InitY
-  Update Exported Variables = Logical True
-
-  Linear System Solver = Iterative
-  Linear System Max Iterations = 500
-  Linear System Iterative Method = BiCGStab
-  Linear System Preconditioning = ILU4
-  Linear System Convergence Tolerance = Real 1.0e-6
-  Steady State Convergence Tolerance = 1.0e-04
-  Linear System Residual Output = 1
-  Optimize Bandwidth = Logical False
-
-End
-
-
-Solver 15
-  Equation = MeshToMesh
-  Exec Solver = "Never"
-  Procedure = "ElmerIceSolvers" "TwoMeshes"
-  Variable = Height_TwoMeshes ! Only needed for TwoMeshes, I think. Not sure what it does.
-  Exec Solver = "After Timestep"
-  Linear System Solver = Iterative
-  Linear System Iterative Method = BiCGStab
-  Linear System Max Iterations = 500
-  Linear System Convergence Tolerance = 1.0e-8
-  Linear System Preconditioning = ILU1
-  Linear System ILUT Tolerance = 1.0e-3
-  Linear System Abort Not Converged = False
-  Linear System Residual Output = 1
-  Linear System Precondition Recompute = 1
-
-!  Map Condition = Equals CalvingOccurs
-!  Extension Amplitude = Real 0.5
-  FS Bottom = Logical True
-  FS Top = Logical True
-  Nullify 1 = String "Long Mesh Update"
-  Nullify 2 = String "Vert Mesh Update"
-  Nullify 3 = String "Front Displacement"
-
-  Variable 1 = Velocity 1
-  Variable 2 = Velocity 2
-  Variable 3 = Pressure
-  Variable 4 = Stress 1
-  Variable 5 = Stress 2
-  Variable 6 = Stress 3
-  Variable 7 = Stress 4
-  Variable 8 = Depth
-  Variable 9 = Height
-  Variable 10 = StrainRate
-  Variable 11 = Min Zs Bottom
-  Variable 12 = Mesh Velocity 1
-  Variable 13 = Mesh Velocity 2
-  Variable 14 = weight
-  Variable 15 = bedrock
-  Variable 16 = fwater 1
-  Variable 17 = fwater 2
-  Variable 18 = Distance
-
-  Surface Variable 1 = String "Zs Top"
-  Surface Variable 2 = String "Zs Bottom"
-  Surface Variable 3 = String "GroundedMask"
-End
-
-Solver 16
-  Equation = "Strain Rate"
-  Procedure = "ElmerIceSolvers" "ComputeStrainRate"
-  Exec Solver = "After Timestep"
-  ! this is just a dummy, hence no output is needed
-  !-----------------------------------------------------------------------  
-  Variable = -nooutput "Eij"
-  Variable DOFs = 1
-
-  Exported Variable 1 = "StrainRate"
-  Exported Variable 1 DOFs = 5 ! in 2D, 7 in 3D
-
-  ! the name of the variable containing the flow solution (U,V,W,Pressure)
-  !-----------------------------------------------------------------------
-  Flow Solver Name = String "Flow Solution"
-  ! the name of the strain-rate solution (default is 'StrainRate')
-  StrainRate Variable Name = String "StrainRate"
-  
-  Linear System Solver = Direct
-  Linear System Direct Method = umfpack
-End
-
-Solver 17
-   Equation = "IntegrateVertically"
-   Exec Solver = "After Timestep"
-   Procedure = File "ElmerIceSolvers" "IntegrateVertically"
-   Variable = String "Mean Velocity"
-   Variable DOFs = 1
-
-   Exported Variable 1 = String "Velocity 1"
-   Exported Variable 1 DOFs = 1
-
-   ! Compute it on the bottom surface
-   On Surface = Logical True
-   ! Calculate the mean value
-   ! We then need the Depth
-   Compute Mean = Logical True
-   Integrated Variable Name = String "Velocity 1"
-
-   Linear System Solver = "Direct"
-   Linear System Direct Method = umfpack
-End
-
-Solver 18
+Solver 12
   Equation = "ResultOutput"
   Procedure = File "ResultOutputSolve" "ResultOutputSolver"
   Exec Solver = "After Timestep"
@@ -645,22 +502,32 @@ Solver 18
   Save Geometry IDs = True
 End
 
+Solver 13
+  Equation = "BalanceFlux"
+  Procedure = File "./prog/sedTransport" "calc_Qb"
+  Exec Solver = "After Timestep"
+
+  Exported Variable 1 = "Xcoord"
+  Exported Variable 1 DOFs = 1
+End
+
+
 !---------------------------------------------------
 !---------------- EQUATIONS ------------------------
 !---------------------------------------------------
 
 Equation 1 ! for glacier bulk
-  Active Solvers(14) = 1 3 4 5 7 8  9 12 13 14 15 16 17 18
+  Active Solvers(8) = 1 3 4 5 7 8 11 12
 End
 
 Equation 2 ! for free surface
-  Active Solvers(1) = 10
+  Active Solvers(2) = 9 13
   Flow Solution Name = String "Flow Solution"
   Convection = String Computed
 End
 
 Equation 3 ! for bedrock surface
-  Active Solvers(3) = 2 6 11
+  Active Solvers(3) = 2 6 10
   Flow Solution Name = String "Flow Solution"
   Convection = String Computed
 End
@@ -676,36 +543,12 @@ Boundary Condition 1
   Body Id = 3
   Bottom Surface Mask = Logical True
 
-  Normal-Tangential Velocity = Logical True
+  Normal-Tangential Velocity =  True
   Flow Force BC = Logical True
 
-  Normal-Tangential Vert Mesh Update = Logical True
+  !Normal-Tangential Vert Mesh Update = Logical True
 
-! Condition where the bed is stuck
 
-  ! Bottom Surface = Variable Coordinate 1
-  !   Real Procedure "./"$bed_func" ""initbedrock"
-
-  !Zs Bottom = Variable Coordinate 1
-  !  Real Procedure "./"$bed_func" ""initbedrock"
-
-  !Zs Bottom Condition = Variable GroundedMask
-  !  Real MATC "tx + 0.5"
-
-  !Vert Mesh Update 2 = Variable Zs Bottom
-  !  Real Procedure "ElmerIceUSF" "ZsBottomMzsIniCalving"
-
- !! Water pressure given through the Stokes 'External Pressure' parameter 
- !! What should be given here is -pw (negative)
- ! if we want the pressure to not be equal to sea pressure, we need to write a function
-
-  External Pressure = Variable Coordinate 2
-    Real Procedure "ElmerIceUSF" "SeaPressure"
-
-  Compute Sea Pressure = Logical True
-
-  Slip Coefficient 2 = Variable Coordinate 1
-    Real Procedure "ElmerIceUSF" "Friction_Coulomb"
   !! Parameters needed for the Coulomb Friction Law
   Friction Law Sliding Coefficient = Real #As
   Friction Law Post-Peak Exponent  = Real 1.0      
@@ -713,16 +556,20 @@ Boundary Condition 1
   Friction Law PowerLaw Exponent = Real #n         
   Friction Law Linear Velocity = Real 1.0e-4
 
-  Velocity 1 = Real 50.0 ! m/yr excavation, technically normal to the surface
+  Velocity 2 = Real 0.0
+  Velocity 1 = Real 0.0 ! m/yr excavation, technically normal to the surface; make this something else to include excavation/deposition
 
-  Vert Mesh Update 1 = Real #50.0*dt 
+  Vert Mesh Update 1 = Variable Velocity 1, "Vert Mesh Update 1"
+     Real Lua "tx[1] + tx[0]*dt"
+  Vert Mesh Update 2 = Variable Velocity 2, "Vert Mesh Update 2"
+     Real Lua "tx[1] + tx[0]*dt"
+  !Vert Mesh Update 1 = Variable "Vert Mesh Update 1"
+  !   Real Lua "50*dt + tx[0]" 
+  !Vert Mesh Update 2 = Real 0
 
   Height = Real 0.0
 
-  Mean Velocity = Real 0.0 ! ???
-
-  !Front Displacement 2 = Variable Inity, Coordinate 2
-  !  Real MATC "tx(1) - tx(0)"
+ 
 End
 
 !! BC Glacier terminus
@@ -735,17 +582,14 @@ Boundary Condition 2
   External Pressure = Variable Coordinate 2
      Real Procedure "ElmerIceUSF" "SeaPressure"
 
-  Long Mesh Update 1 = Variable Long Mesh Update 1, Velocity 1
-       Real MATC "tangentialupdate(tx)"
+  Vert Mesh Update 1 = Real 0.0
+
+  !Velocity 1 = Real 0.0
+
   Compute Sea Pressure = Logical True
   ComputeNormal = Logical True
 
   Distance = Real 0.0
-
-  Front Displacement 1 = Variable Initx, Coordinate 1, Calving 1
-    Real MATC "(tx(1) - tx(0)) + tx(2)"
-  Front Displacement 2 = Variable Inity, Coordinate 2, Calving 2
-    Real MATC "tx(1) - tx(0) + tx(2)"
 End
 
 
@@ -756,14 +600,19 @@ Boundary Condition 3
   Body Id = 2
   Top Surface Mask = Logical True
 
+  ! What do these lines do???
   Depth = Real 0.0
   ComputeNormal = Logical False
-  Vert Mesh Update 2 = Variable Zs Top
-    Real Procedure "ElmerIceUSF" "ZsTopMzsIniCalving"
+  Vert Mesh Update 2 = Variable Zs Top, Reference Zs Top
+    Real Lua "tx[0] - tx[1]"
+    !Real Procedure "ElmerIceUSF" "ZsTopMzsIniCalving"
+  Vert Mesh Update 1 = Real 0.0
 
   !Front Displacement 2 = Variable Inity, Coordinate 2
   !  Real MATC "tx(1) - tx(0)"
 
+
+  
   
 End
 
@@ -772,10 +621,10 @@ Boundary Condition 4
   Name = "back"
   Target Boundaries = 3
   Velocity 1 = #U0
-  Long Mesh Update 2 = Real 0.0
-  Vert Mesh Update 1 = Real 0.0
-  Front Displacement 1 = Real 0.0
-  Front Displacement 2 = Real 0.0
+  !Long Mesh Update = Real 0.0
+  Vert Mesh Update 1 = Real #U0*dt
+  !Front Displacement 1 = Real 0.0
+  !Front Displacement 2 = Real 0.0
 
   ComputeNormal = Logical False
 End
