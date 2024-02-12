@@ -120,8 +120,8 @@ End
 !! for ice
 Initial Condition 1
 !  ToBeIntegrated = Opposes Coordinate 1
- ToBeIntegrated = Variable Coordinate 1
-    Real MATC "3.0*(tx(0)>0)*tx(0)*tx(0)"
+ ToBeIntegrated = Real 1 !Variable Coordinate 1
+ !   Real MATC "3.0*(tx(0)>0)*tx(0)*tx(0)"
 End
 
 !---------------------------------------------------
@@ -130,8 +130,8 @@ End
 
 Body Force 1
    !ToBeIntegrated = Opposes Coordinate 1 
-   ToBeIntegrated = Variable Coordinate 1
-    Real MATC "3.0*(tx(0)>0)*tx(0)*tx(0)"
+   ToBeIntegrated = Real 1.0 !Variable Coordinate 1
+!    Real MATC "3.0*(tx(0)>0)*tx(0)*tx(0)"
 End
 
 
@@ -264,9 +264,9 @@ End
 
 !! BC Glacier terminus
 Boundary Condition 2
-  Name = "front"
+  Name = "back"
   Target Boundaries = 1
-  IntegratedValue = Real 0.0
+  IntegratedValue = Real -10.0
 End
 
 
@@ -281,8 +281,9 @@ End
 
 !! BC Ice divide
 Boundary Condition 4
-  Name = "back"
+  Name = "front"
   Target Boundaries = 2
+  !IntegratedValue = Real 0.0
 End
 
 
