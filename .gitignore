@@ -1,3 +1,5 @@
 results/
 mesh/*result
 */*so
+*~
+*.vtu
